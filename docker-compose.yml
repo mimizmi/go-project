@@ -1,0 +1,256 @@
+version: "3.9"
+
+# ============================================================================
+#  医院异构系统实时数据中台 - 全平台统一编排
+#
+#  一键启动: docker compose up -d --build
+#  一键停止: docker compose down
+#  清除数据: docker compose down -v
+#
+#  启动后访问:
+#    管理控制台: http://localhost:5173
+#    Grafana:    http://localhost:3000 (admin/admin)
+#    Kafka UI:   http://localhost:8080
+# ============================================================================
+
+services:
+
+  # ========================= 数据源层 =========================
+
+  mysql:
+    image: mysql:8.0
+    container_name: cdc-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: hospital_his
+    command: >
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --binlog-row-image=FULL
+      --expire-logs-days=3
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./cdc/scripts/init_mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cdc-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Pass123"
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      - "14330:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Pass123" -C -Q "SELECT 1" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong!Pass123" -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ========================= 消息队列层 =========================
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: cdc-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: kafka-topics --bootstrap-server localhost:9092 --list || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: cdc-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: hospital-cdc
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8080:8080"
+
+  # ========================= ODS 存储层 =========================
+
+  postgres:
+    image: postgres:16
+    container_name: cdc-postgres
+    environment:
+      POSTGRES_USER: ods_user
+      POSTGRES_PASSWORD: ods_pass
+      POSTGRES_DB: hospital_ods
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./cdc/scripts/init_postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ods_user -d hospital_ods"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================= CDC 采集平台 =========================
+
+  cdc-platform:
+    build: ./cdc
+    container_name: cdc-platform
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      SOURCES_CONFIG: /app/configs/sources.yaml
+      TOPICS_CONFIG: /app/configs/topics.yaml
+      OFFSET_STORE_PATH: /app/data/offsets/offsets.db
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MYSQL_HOST: mysql
+      MYSQL_USER: cdc_user
+      MYSQL_PASSWORD: cdc_pass
+      SQLSERVER_HOST: sqlserver
+      SQLSERVER_USER: sa
+      SQLSERVER_PASSWORD: "YourStrong!Pass123"
+      PG_HOST: postgres
+      PG_USER: ods_user
+      PG_PASSWORD: ods_pass
+      PG_DATABASE: hospital_ods
+      LOG_LEVEL: info
+      METRICS_PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - offset-data:/app/data/offsets
+
+  # ========================= OLAP 分析层 =========================
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    container_name: mdi-clickhouse
+    environment:
+      CLICKHOUSE_DB: hospital_dw
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mdi-redis
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - "16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ========================= 监控层 =========================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cdc-prometheus
+    volumes:
+      - ./cdc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cdc-grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./cdc/grafana/provisioning:/etc/grafana/provisioning
+      - ./cdc/grafana/dashboards:/var/lib/grafana/dashboards
+
+  # ========================= FHIR 服务层 =========================
+
+  fhir-server:
+    build: ./fhir-gateway/server
+    container_name: fhir-server
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      MED_INSIGHT_URL: http://host.docker.internal:8082
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3001
+      JWT_SECRET: fhir-gateway-secret-key-2024
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ========================= 前端应用层 =========================
+
+  fhir-web:
+    build: ./fhir-gateway/web
+    container_name: fhir-web
+    depends_on:
+      - fhir-server
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  sqlserver-data:
+  kafka-data:
+  postgres-data:
+  offset-data:
+  clickhouse-data:
+  grafana-data:

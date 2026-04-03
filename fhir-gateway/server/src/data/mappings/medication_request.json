@@ -1,0 +1,98 @@
+{
+  "resourceType": "MedicationRequest",
+  "description": "HIS医嘱/处方 → FHIR R4 MedicationRequest资源映射规则",
+  "sourceTable": "ods_hospital_his_orders",
+  "sourceSystem": "his_mysql_01",
+  "version": "1.0.0",
+  "mappingRules": [
+    {
+      "fhirPath": "resourceType",
+      "value": "MedicationRequest",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "id",
+      "sourceField": "order_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "identifier[0].system",
+      "value": "urn:hospital:his:order-id",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "identifier[0].value",
+      "sourceField": "order_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "status",
+      "sourceField": "status",
+      "type": "mapping",
+      "valueMap": {
+        "已执行": "completed",
+        "待执行": "active",
+        "已取消": "cancelled",
+        "executed": "completed",
+        "pending": "active",
+        "cancelled": "cancelled"
+      },
+      "default": "unknown"
+    },
+    {
+      "fhirPath": "intent",
+      "value": "order",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "medicationCodeableConcept.text",
+      "sourceField": "drug_name",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "subject.reference",
+      "sourceField": "patient_id",
+      "type": "template",
+      "template": "Patient/{value}"
+    },
+    {
+      "fhirPath": "encounter.reference",
+      "sourceField": "visit_id",
+      "type": "template",
+      "template": "Encounter/{value}"
+    },
+    {
+      "fhirPath": "requester.display",
+      "sourceField": "doctor",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "authoredOn",
+      "sourceField": "order_time",
+      "type": "direct",
+      "transform": "toISOString"
+    },
+    {
+      "fhirPath": "dosageInstruction[0].text",
+      "sourceField": "dosage",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "dosageInstruction[0].timing.code.text",
+      "sourceField": "frequency",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "dosageInstruction[0].route.text",
+      "sourceField": "route",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "meta.source",
+      "value": "urn:hospital:data-platform:cdc",
+      "type": "constant"
+    }
+  ]
+}

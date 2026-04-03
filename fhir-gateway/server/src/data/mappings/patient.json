@@ -1,0 +1,93 @@
+{
+  "resourceType": "Patient",
+  "description": "HIS患者表 → FHIR R4 Patient资源映射规则",
+  "sourceTable": "ods_hospital_his_patients",
+  "sourceSystem": "his_mysql_01",
+  "version": "1.0.0",
+  "mappingRules": [
+    {
+      "fhirPath": "resourceType",
+      "value": "Patient",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "id",
+      "sourceField": "patient_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "identifier[0].system",
+      "value": "urn:hospital:his:patient-id",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "identifier[0].value",
+      "sourceField": "patient_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "identifier[1].system",
+      "value": "urn:hospital:empi",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "identifier[1].value",
+      "sourceField": "_empi_id",
+      "type": "direct",
+      "description": "由EMPI服务在运行时注入"
+    },
+    {
+      "fhirPath": "name[0].use",
+      "value": "official",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "name[0].text",
+      "sourceField": "name",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "gender",
+      "sourceField": "gender",
+      "type": "mapping",
+      "valueMap": {
+        "M": "male",
+        "F": "female",
+        "男": "male",
+        "女": "female",
+        "male": "male",
+        "female": "female"
+      },
+      "default": "unknown"
+    },
+    {
+      "fhirPath": "birthDate",
+      "sourceField": "birth_date",
+      "type": "direct",
+      "transform": "toDateString"
+    },
+    {
+      "fhirPath": "address[0].use",
+      "value": "home",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "address[0].text",
+      "sourceField": "address",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "meta.lastUpdated",
+      "sourceField": "created_at",
+      "type": "direct",
+      "transform": "toISOString"
+    },
+    {
+      "fhirPath": "meta.source",
+      "value": "urn:hospital:data-platform:cdc",
+      "type": "constant"
+    }
+  ]
+}

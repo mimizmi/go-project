@@ -1,0 +1,96 @@
+{
+  "resourceType": "DiagnosticReport",
+  "description": "LIS检验结果 → FHIR R4 DiagnosticReport资源映射规则",
+  "sourceTable": "ods_hospital_lis_lab_results",
+  "sourceSystem": "lis_sqlserver_01",
+  "version": "1.0.0",
+  "mappingRules": [
+    {
+      "fhirPath": "resourceType",
+      "value": "DiagnosticReport",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "id",
+      "sourceField": "result_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "identifier[0].system",
+      "value": "urn:hospital:lis:result-id",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "identifier[0].value",
+      "sourceField": "result_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "status",
+      "value": "final",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "category[0].coding[0].system",
+      "value": "http://terminology.hl7.org/CodeSystem/v2-0074",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "category[0].coding[0].code",
+      "value": "LAB",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "code.coding[0].code",
+      "sourceField": "item_code",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "code.coding[0].display",
+      "sourceField": "item_name",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "subject.reference",
+      "sourceField": "patient_id",
+      "type": "template",
+      "template": "Patient/{value}"
+    },
+    {
+      "fhirPath": "encounter.reference",
+      "sourceField": "visit_id",
+      "type": "template",
+      "template": "Encounter/{value}"
+    },
+    {
+      "fhirPath": "effectiveDateTime",
+      "sourceField": "result_time",
+      "type": "direct",
+      "transform": "toISOString"
+    },
+    {
+      "fhirPath": "result[0].display",
+      "sourceField": "item_name",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "conclusion",
+      "sourceField": "is_abnormal",
+      "type": "mapping",
+      "valueMap": {
+        "1": "异常",
+        "0": "正常",
+        "true": "异常",
+        "false": "正常"
+      },
+      "default": "未知"
+    },
+    {
+      "fhirPath": "meta.source",
+      "value": "urn:hospital:data-platform:cdc",
+      "type": "constant"
+    }
+  ]
+}

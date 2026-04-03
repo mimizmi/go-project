@@ -1,0 +1,102 @@
+{
+  "resourceType": "Encounter",
+  "description": "HIS就诊记录 → FHIR R4 Encounter资源映射规则",
+  "sourceTable": "ods_hospital_his_visits",
+  "sourceSystem": "his_mysql_01",
+  "version": "1.0.0",
+  "mappingRules": [
+    {
+      "fhirPath": "resourceType",
+      "value": "Encounter",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "id",
+      "sourceField": "visit_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "identifier[0].system",
+      "value": "urn:hospital:his:visit-id",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "identifier[0].value",
+      "sourceField": "visit_id",
+      "type": "direct",
+      "transform": "toString"
+    },
+    {
+      "fhirPath": "status",
+      "sourceField": "discharge_time",
+      "type": "conditional",
+      "condition": {
+        "ifNull": "in-progress",
+        "else": "finished"
+      }
+    },
+    {
+      "fhirPath": "class.system",
+      "value": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+      "type": "constant"
+    },
+    {
+      "fhirPath": "class.code",
+      "sourceField": "visit_type",
+      "type": "mapping",
+      "valueMap": {
+        "门诊": "AMB",
+        "急诊": "EMER",
+        "住院": "IMP",
+        "outpatient": "AMB",
+        "emergency": "EMER",
+        "inpatient": "IMP"
+      },
+      "default": "AMB"
+    },
+    {
+      "fhirPath": "class.display",
+      "sourceField": "visit_type",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "subject.reference",
+      "sourceField": "patient_id",
+      "type": "template",
+      "template": "Patient/{value}"
+    },
+    {
+      "fhirPath": "participant[0].individual.display",
+      "sourceField": "doctor",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "period.start",
+      "sourceField": "admit_time",
+      "type": "direct",
+      "transform": "toISOString"
+    },
+    {
+      "fhirPath": "period.end",
+      "sourceField": "discharge_time",
+      "type": "direct",
+      "transform": "toISOString"
+    },
+    {
+      "fhirPath": "reasonCode[0].text",
+      "sourceField": "diagnosis",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "serviceProvider.display",
+      "sourceField": "dept",
+      "type": "direct"
+    },
+    {
+      "fhirPath": "meta.source",
+      "value": "urn:hospital:data-platform:cdc",
+      "type": "constant"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+# ===== 全局 =====
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# AI工具会话
+.claude/
+.omc/
+
+# ===== Go (CDC / Med-Insight) =====
+bin/
+*.exe
+*.test
+*.out
+vendor/
+
+# CDC 运行时数据
+cdc/data/
+cdc/prometheus/data/
+cdc/grafana/data/
+
+# Med-Insight 运行时数据
+med-insight/data/
+med-insight/scripts/results/*.json
+
+# ===== Node.js (FHIR Gateway) =====
+node_modules/
+dist/
+fhir-gateway/server/node_modules/
+fhir-gateway/web/node_modules/
+fhir-gateway/web/dist/
+
+# ===== 平台运行时 =====
+.platform-pids
+*.sqlite
+*.db

@@ -1,0 +1,18 @@
+{
+  "name": "fhir-gateway",
+  "version": "1.0.0",
+  "description": "统一FHIR接口服务网关 - 医院异构系统实时数据中台",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.7.0",
+    "uuid": "^10.0.0"
+  }
+}

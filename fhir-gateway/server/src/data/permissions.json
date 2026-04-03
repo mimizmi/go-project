@@ -1,0 +1,89 @@
+{
+  "description": "模拟科室级细粒度权限控制数据 - 基于RBAC+ABAC混合模型",
+  "roles": [
+    {
+      "id": "role_doctor",
+      "name": "临床医生",
+      "description": "可查看本科室患者的完整诊疗信息"
+    },
+    {
+      "id": "role_nurse",
+      "name": "护士",
+      "description": "可查看本科室患者基本信息和医嘱"
+    },
+    {
+      "id": "role_lab_tech",
+      "name": "检验技师",
+      "description": "可查看检验结果相关信息"
+    },
+    {
+      "id": "role_admin",
+      "name": "系统管理员",
+      "description": "可访问所有数据和管理功能"
+    }
+  ],
+  "users": [
+    {
+      "userId": "U001",
+      "username": "doctor_zhang",
+      "password": "123456",
+      "name": "张医生",
+      "role": "role_doctor",
+      "department": "心内科"
+    },
+    {
+      "userId": "U002",
+      "username": "nurse_li",
+      "password": "123456",
+      "name": "李护士",
+      "role": "role_nurse",
+      "department": "心内科"
+    },
+    {
+      "userId": "U003",
+      "username": "lab_wang",
+      "password": "123456",
+      "name": "王技师",
+      "role": "role_lab_tech",
+      "department": "检验科"
+    },
+    {
+      "userId": "U004",
+      "username": "admin",
+      "password": "admin123",
+      "name": "系统管理员",
+      "role": "role_admin",
+      "department": "信息科"
+    }
+  ],
+  "accessPolicies": [
+    {
+      "role": "role_admin",
+      "resources": ["Patient", "Encounter", "MedicationRequest", "DiagnosticReport", "Observation"],
+      "departments": ["*"],
+      "fields": ["*"],
+      "actions": ["read", "write", "manage"]
+    },
+    {
+      "role": "role_doctor",
+      "resources": ["Patient", "Encounter", "MedicationRequest", "DiagnosticReport", "Observation"],
+      "departments": ["$own"],
+      "fields": ["*"],
+      "actions": ["read"]
+    },
+    {
+      "role": "role_nurse",
+      "resources": ["Patient", "Encounter", "MedicationRequest"],
+      "departments": ["$own"],
+      "fields": ["identifier", "name", "gender", "birthDate", "class", "period", "medication", "dosage"],
+      "actions": ["read"]
+    },
+    {
+      "role": "role_lab_tech",
+      "resources": ["Patient", "DiagnosticReport", "Observation"],
+      "departments": ["*"],
+      "fields": ["identifier", "name", "code", "value", "unit", "referenceRange", "status"],
+      "actions": ["read"]
+    }
+  ]
+}
