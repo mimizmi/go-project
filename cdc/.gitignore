@@ -1,0 +1,47 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/dist/
+/main
+/cli
+/platform
+
+# Go build output
+*.test
+*.out
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data
+data/*.db
+data/*.sqlite
+
+# Docker volumes
+prometheus/data/
+grafana/data/
+
+# Tool session files
+.claude/
+.omc/

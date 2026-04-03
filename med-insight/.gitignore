@@ -1,0 +1,27 @@
+# Binaries
+bin/
+experiment
+*.exe
+
+# Build artifacts
+*.test
+*.out
+
+# State and logs
+data/sync_state.json
+logs/
+
+# Config with secrets (keep example)
+# configs/config.yaml  # keep tracked
+
+# Tool state
+.omc/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Go module cache
+vendor/

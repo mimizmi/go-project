@@ -1,0 +1,34 @@
+sources:
+  - id: his_mysql_01
+    type: mysql
+    host: ${MYSQL_HOST}
+    port: 3306
+    user: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    database: hospital_his
+    server_id: 1001
+    tables:
+      - patients
+      - visits
+      - orders
+    mask_fields:
+      patients:
+        - id_card
+        - phone
+
+  - id: lis_sqlserver_01
+    type: sqlserver
+    host: ${SQLSERVER_HOST}
+    port: 1433
+    user: ${SQLSERVER_USER}
+    password: ${SQLSERVER_PASSWORD}
+    database: hospital_lis
+    tables:
+      - lab_results
+
+pipeline:
+  batch_size: 500
+  batch_timeout_ms: 1000
+  max_retries: -1          # -1 = 无限重试
+  retry_base_delay_ms: 1000
+  retry_max_delay_ms: 60000

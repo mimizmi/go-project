@@ -1,0 +1,30 @@
+server:
+  port: 8082
+  mode: release
+
+clickhouse:
+  dsn: "clickhouse://default:@localhost:9000/hospital_dw"
+  database: hospital_dw
+
+postgres:
+  dsn: "postgres://ods_user:ods_pass@localhost:5433/hospital_ods"
+
+redis:
+  addr: "localhost:16379"
+  password: ""
+  db: 0
+
+cache:
+  l1_ttl_seconds: 30       # 本地缓存 TTL
+  l2_ttl_seconds: 300      # Redis 缓存 TTL
+  l1_max_items: 1000
+  ttl_jitter_pct: 20       # TTL 随机抖动比例（防雪崩）
+  bloom_expected: 100000   # 布隆过滤器预期元素数
+  bloom_fp_rate: 0.01      # 假阳性率
+
+syncer:
+  interval_seconds: 5
+  batch_size: 500
+
+log:
+  level: info

@@ -1,0 +1,12 @@
+{
+  "experiment_type": "correctness",
+  "timestamp": "2026-03-18T04:48:42.882250701Z",
+  "config": {
+    "records": 10000
+  },
+  "metrics": {
+    "check_result": "PASS",
+    "sync_lag_s": 2.5
+  },
+  "status": "PASS"
+}

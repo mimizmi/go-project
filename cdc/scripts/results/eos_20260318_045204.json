@@ -1,0 +1,13 @@
+{
+  "experiment_type": "eos",
+  "timestamp": "2026-03-18T04:52:04.854566358Z",
+  "config": {
+    "mode": "eos",
+    "records": 5000
+  },
+  "metrics": {
+    "duplicate_count": 0,
+    "mode": "eos"
+  },
+  "status": "PASS"
+}
